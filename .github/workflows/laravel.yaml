@@ -1,0 +1,86 @@
+name: Laravel
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  laravel-tests:
+    runs-on: ubuntu-latest
+
+    env:
+      DB_CONNECTION: sqlite
+      DB_DATABASE: database/database.sqlite
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP with Extensions and Tools
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, bcmath, openssl, pdo, tokenizer, xml, ctype, json, curl
+          tools: composer
+
+      - name: Copy .env if not exists
+        run: php -r "file_exists('.env') || copy('.env.example', '.env');"
+
+      - name: Install Composer Dependencies
+        run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
+      - name: Install Node
+        run: npm install
+
+      - name: Generate Build
+        run: npm run build
+
+      - name: Generate Application Key
+        run: php artisan key:generate
+
+      - name: Set Directory Permissions
+        run: chmod -R 777 storage bootstrap/cache
+
+      - name: Create SQLite Database
+        run: |
+          mkdir -p database
+          touch $DB_DATABASE
+
+      - name: Run Tests (PHPUnit or Pest)
+        run: composer ci
+
+  deploy:
+    needs: laravel-tests
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP with Envoy
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer, envoy
+
+      - name: Install Composer Dependencies (only for Envoy)
+        run: composer install --no-interaction --no-progress --prefer-dist --optimize-autoloader
+
+      - name: Create temporary .env for Envoy
+        run: echo "DEPLOY_SERVERS_WEB=${{ secrets.DEPLOY_SERVERS_WEB }}" > .env
+
+      - name: Configure SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+          IFS=',' read -ra HOSTS <<< "${{ secrets.DEPLOY_SERVERS_WEB }}"
+          for ITEM in "${HOSTS[@]}"; do
+            DEPLOY_HOST=$(echo "$ITEM" | cut -d'@' -f2)
+            ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+          done
+
+      - name: Run Envoy Deploy
+        run: vendor/bin/envoy run deploy
