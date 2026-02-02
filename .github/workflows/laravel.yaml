@@ -61,7 +61,7 @@ jobs:
       - name: Setup PHP with Envoy
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.4'
+          php-version: '8.3'
           tools: composer, envoy
 
       - name: Install Composer Dependencies (only for Envoy)
