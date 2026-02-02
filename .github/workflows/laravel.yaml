@@ -21,7 +21,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-          extensions: mbstring, bcmath, openssl, pdo, tokenizer, xml, ctype, json, curl
+          extensions: mbstring, bcmath, openssl, pdo, tokenizer, xml, ctype, json, curl, dom, fileinfo, filter, hash, iconv, libxml, pcntl, pcre, phar, posix, reflection, session, simplexml, xmlwriter, zip
           tools: composer
 
       - name: Copy .env if not exists
@@ -62,6 +62,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
+          extensions: mbstring, bcmath, openssl, pdo, tokenizer, xml, ctype, json, curl, dom, fileinfo, filter, hash, iconv, libxml, pcntl, pcre, phar, posix, reflection, session, simplexml, xmlwriter, zip
           tools: composer, envoy
 
       - name: Install Composer Dependencies (only for Envoy)
