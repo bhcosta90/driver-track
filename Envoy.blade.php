@@ -57,7 +57,7 @@ done
 
 @task('finish-deploy')
 cd {{ $app_dir }}
-php artisan octane:reload
+sudo -u www-data php artisan octane:reload
 echo "✅ Deployment finished successfully!"
 @endtask
 
