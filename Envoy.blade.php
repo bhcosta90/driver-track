@@ -56,6 +56,8 @@ done
 @endtask
 
 @task('finish-deploy')
+cd {{ $app_dir }}
+php artisan octane:reload
 echo "✅ Deployment finished successfully!"
 @endtask
 
